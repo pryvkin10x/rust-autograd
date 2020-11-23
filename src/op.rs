@@ -212,7 +212,7 @@ impl<'g, 't, 'v, T: Float> ComputeContext<'t, 'v, T> {
                 Some(ret) => ret,
                 None => panic!(
                     "Bad op impl of {}: input({})/input_mut({}) cannot be called twice",
-                    self.node.op.name(),
+                    self.node.get_op().name(),
                     i,
                     i
                 ),
@@ -220,7 +220,7 @@ impl<'g, 't, 'v, T: Float> ComputeContext<'t, 'v, T> {
             _ => {
                 panic!(
                     "Bad op impl of {}: cannot perform immutable borrowing for input({})",
-                    self.node.op.name(),
+                    self.node.get_op().name(),
                     i
                 );
             }
@@ -241,7 +241,7 @@ impl<'g, 't, 'v, T: Float> ComputeContext<'t, 'v, T> {
                 Some(ret) => ret,
                 None => panic!(
                     "Bad op impl of {}: input({})/input_mut({}) cannot be called twice",
-                    self.node.op.name(),
+                    self.node.get_op().name(),
                     i,
                     i
                 ),
@@ -249,7 +249,7 @@ impl<'g, 't, 'v, T: Float> ComputeContext<'t, 'v, T> {
             _ => {
                 panic!(
                     "Bad op impl of {}: cannot perform mutable borrowing for input({})",
-                    self.node.op.name(),
+                    self.node.get_op().name(),
                     i
                 );
             }
@@ -368,18 +368,16 @@ impl<'g, T: Float> GradientContext<'g, T> {
     /// Grabs the `i` th symbolic input.
     #[inline]
     pub fn input(&self, i: usize) -> Tensor<'g, T> {
-        self.y
-            .inner()
-            .in_edges
-            .get(i)
-            .expect("bad Op::grad impl")
-            .get_scoped(self.graph)
+        return self
+            .y
+            .input_tensor(i, self.graph)
+            .expect("bad Op::grad impl");
     }
 
     /// Returns the number of inputs.
     #[inline]
     pub fn num_inputs(&self) -> usize {
-        self.y.inner().in_edges.len()
+        unsafe { self.y.inner().in_edges.len() }
     }
 
     /// Returns a graph object that is usable for tensor computations in the context.
