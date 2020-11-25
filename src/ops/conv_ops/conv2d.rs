@@ -554,6 +554,5 @@ impl<T: Float> crate::op::Op<T> for Conv2DFilterGrad {
 
         ctx.append_input_grad(Some(gx));
         ctx.append_input_grad(Some(ggy));
-        ctx.append_input_grad(None);
     }
 }

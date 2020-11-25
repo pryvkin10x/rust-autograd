@@ -306,18 +306,23 @@ impl<'graph, F: Float> Tensor<'graph, F> {
         unsafe { self.inner().num_inputs() }
     }
 
+    /// Returns the number of inputs of this tensor.
+    #[inline]
+    pub fn num_backprop_inputs(&self) -> usize {
+        unsafe {
+            let inner = self.inner();
+            inner
+                .backprop_inputs
+                .as_ref()
+                .unwrap_or(&inner.in_edges)
+                .len()
+        }
+    }
+
     #[inline]
     /// Returns true if this node has no incoming nodes.
     pub fn is_source(&self) -> bool {
         unsafe { self.inner().is_source() }
-    }
-
-    #[inline]
-    /// Input nodes used when backprop.
-    ///
-    /// This is same as `inputs` in most cases.
-    pub(crate) unsafe fn get_backprop_inputs(&self) -> &[Input] {
-        self.inner().get_backprop_inputs()
     }
 
     #[inline]

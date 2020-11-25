@@ -155,9 +155,9 @@ pub mod test_helper;
 
 use rustc_hash::FxHasher;
 use std::any::TypeId;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::hash::BuildHasherDefault;
-use std::collections::{HashMap, HashSet};
 
 pub(crate) type FxHashMap<K, V> = HashMap<K, V, BuildHasherDefault<FxHasher>>;
 pub(crate) type FxHashSet<K> = HashSet<K, BuildHasherDefault<FxHasher>>;
