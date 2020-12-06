@@ -7,6 +7,7 @@ use crate::{Float, NdArray};
 use std::any::type_name;
 use std::fmt;
 use std::marker::PhantomData;
+use std::mem;
 
 // Properties for op's `compute` method.
 // Actual number of inout/output nodes are around 1~2 in most cases.
@@ -345,12 +346,22 @@ impl<'g, T: Float> GradientContext<'g, T> {
         }
     }
 
-    pub(crate) fn extract_input_grads(self) -> InputArray<Option<Tensor<'g, T>>> {
-        debug_assert!(
-            !self.gxs.is_empty(),
-            "Bad Op impl: GradientContext::set_input_grads was not called"
-        );
-        self.gxs
+    // Call Op::grad and return `gxs`
+    pub(crate) fn extract_input_grads(mut self) -> InputArray<Option<Tensor<'g, T>>> {
+        let id = self.y.id;
+        unsafe {
+            // steal op
+            let stolen = mem::replace(&mut self.graph().access_inner_mut(id).op, None).unwrap();
+            // call Op::grad
+            stolen.grad(&mut self);
+            // restore
+            mem::swap(&mut self.graph().access_inner_mut(id).op, &mut Some(stolen));
+            debug_assert!(
+                !self.gxs.is_empty(),
+                "Bad Op impl: GradientContext::set_input_grads was not called"
+            );
+            self.gxs
+        }
     }
 
     /// Returns the symbolic gradient of the op's output.

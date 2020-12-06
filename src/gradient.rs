@@ -165,11 +165,7 @@ pub(crate) fn symbolic_gradients<'t, 'g, T: Float>(
 
             // Call Op::grad (mutate the graph)
             let y_tensor = g.tensor(y.id);
-            let mut ctx = GradientContext::new(gy, y_tensor, g);
-            y_tensor.access_op(|op| {
-                op.grad(&mut ctx);
-            });
-            let gxs = ctx.extract_input_grads();
+            let gxs = GradientContext::new(gy, y_tensor, g).extract_input_grads();
             debug_assert_eq!(y_tensor.num_backprop_inputs(), gxs.len());
             gxs
         };

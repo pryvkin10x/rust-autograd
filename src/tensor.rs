@@ -8,7 +8,6 @@ use crate::op::GradientContext;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
-use std::mem;
 use std::ops::{Add, Div, Mul, Sub};
 use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
@@ -59,20 +58,6 @@ impl<'graph, F: Float> Tensor<'graph, F> {
     #[inline]
     pub(crate) unsafe fn inner<'t>(&self) -> &'t TensorInternal<F> {
         self.graph.access_inner(self.id)
-    }
-
-    // take the op away from this tensor, and then run this op, and then return the op back
-    // to this tensor.
-    //
-    // NOTE: Graph may be mutated in this method.
-    pub fn access_op<FUN: FnMut(&Box<dyn op::Op<F>>)>(&self, mut f: FUN) {
-        unsafe {
-            let mut_internal = self.graph.access_inner_mut(self.id);
-            // steal op
-            let stolen = mem::replace(&mut mut_internal.op, None).unwrap();
-            f(&stolen);
-            mem::swap(&mut mut_internal.op, &mut Some(stolen));
-        }
     }
 
     /// Returns the graph to which this tensor belongs.
