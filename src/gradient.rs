@@ -1,6 +1,6 @@
 //! Defining things related to gradient computation.
 use crate::op::{GradientContext, InputArray};
-use crate::tensor::{Tensor, TensorInternal};
+use crate::tensor::Tensor;
 use crate::Float;
 use crate::FxHashMap;
 use crate::Graph;
@@ -18,13 +18,13 @@ struct GradInfo<'graph, T: Float> {
 
 impl<'g, T: Float> GradInfo<'g, T> {
     #[inline]
-    fn new(has_gradient: bool, default_grad: Option<&TensorInternal<T>>) -> GradInfo<'g, T> {
+    fn new(has_gradient: bool) -> GradInfo<'g, T> {
         GradInfo {
             has_gradient,
             computed_grads: InputArray::new(),
             grad_called: false,
             accumulated_grad: None,
-            default_grad: default_grad.map(|x| x.id),
+            default_grad: None,
         }
     }
 
@@ -97,7 +97,7 @@ fn get_between_nodes<'t, 'g, T: Float>(
         if should_visit {
             let has_gradient =
                 node.is_differentiable() && (is_wrt(node_id, wrt) || has_marked_child(node, &ret));
-            ret.insert(node_id, GradInfo::new(has_gradient, None));
+            ret.insert(node_id, GradInfo::new(has_gradient));
         } else {
             // Put self on the stack top (should visit next time)
             dfs_stack.push((node_id, true));
@@ -110,7 +110,7 @@ fn get_between_nodes<'t, 'g, T: Float>(
                         // because there will be no `wrt` nodes in this direction....
                         ret.insert(
                             child.id,
-                            GradInfo::new(child.is_differentiable() && is_wrt(child.id, wrt), None),
+                            GradInfo::new(child.is_differentiable() && is_wrt(child.id, wrt)),
                         );
                     } else {
                         // Recurse
